@@ -1,6 +1,9 @@
 # KALILINUX_VPS
 Gunakan pake vps web jangan di termux  panas
 
+git clone https://github.com/mexazohozoo/KALILINUX_VPS
+
+cd KALILINUX_VPS
 # Simpan script jadi install.sh
 chmod +x install.sh
 
