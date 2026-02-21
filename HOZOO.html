@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DANA RECOVERY V3</title>
+  <link rel="icon" href="https://raw.githubusercontent.com/mexazohozoo/KALILINUX_VPS/main/New%20Project%20222%20%5B9EAE6EC%5D.png">
+
+  <!-- Manifest untuk Android WebAPK / Chrome -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#05060a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DANA RECOVERY V3">
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/mexazohozoo/KALILINUX_VPS/main/New%20Project%20222%20%5B9EAE6EC%5D.png">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    :root {
+      --size: 300px; /* ukuran intro */
+      --duration: 5s;
+      --bg:#05060a;
+      --accent:#00D632; /* Warna hijau DANA */
+      --accent2:#00A3FF;
+      --muted:#EBE8EB;
+      --mono:'Share Tech Mono', monospace;
+      --ui: 'Inter', system-ui, sans-serif;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:#e6eef6;
+      font-family:var(--ui);
+      -webkit-font-smoothing:antialiased;
+    }
+    *{box-sizing:border-box}
+
+    /* =========================
+       INTRO (full-screen overlay)
+       ========================= */
+    #introOverlay{
+      position:fixed;
+      inset:0;
+      background:#000;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      transition: opacity .6s ease;
+      pointer-events: auto;
+    }
+
+    .video-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .video-wrap {
+      width: var(--size);
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 0 10px rgba(255,255,255,0.15);
+      position: relative;
+    }
+
+    video#player {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border: none;
+      outline: none;
+      pointer-events: none;
+    }
+
+    .loading-area {
+      width: var(--size);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .loading-text { font-weight:600; letter-spacing:0.05em; font-size:0.9rem; color:#fff; font-family:var(--ui); }
+    .loading-bar { width:100%; height:8px; background: rgba(255,255,255,0.15); border-radius:999px; overflow:hidden; }
+    .loading-bar i { display:block; height:100%; width:0%; background: linear-gradient(90deg,#fff,rgba(255,255,255,0.5)); border-radius:999px; animation: fillBar var(--duration) linear forwards; }
+    @keyframes fillBar { from{width:0%} to{width:100%} }
+
+    .dots { display:flex; gap:6px; margin-top:6px; }
+    .dot { width:6px; height:6px; border-radius:50%; background:white; opacity:0.2; animation: blink 1s infinite; }
+    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
+    @keyframes blink { 0%,80%,100%{opacity:.2; transform:translateY(0)} 40%{opacity:1; transform:translateY(-4px)} }
+
+    .brand-text { margin-top:12px; font-family: "Orbitron", sans-serif; font-weight:900; font-size:1.1rem; letter-spacing:2px; color:#fff; text-shadow:0 0 10px rgb(120,120,120); user-select:none; }
+
+    /* hide intro overlay when finished */
+    #introOverlay.hidden { opacity: 0; pointer-events: none; }
+
+    @media (max-width:400px){ :root{ --size:250px } .brand-text{ font-size:1rem } }
+
+    /* =========================
+       MAIN APP LAYOUT (DANA RECOVERY)
+       ========================= */
+    #app {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .45s ease .1s, visibility .45s ease .1s;
+      padding: 18px;
+      min-height: 100vh;
+    }
+    #app.visible { opacity: 1; visibility: visible; }
+
+    .topbar { display:flex; align-items:center; background:transparent; padding:8px 12px; }
+    .title-top { font-family: var(--mono); font-size:18px; font-weight:600; color:var(--accent); }
+    .robot-box{ background:radial-gradient(circle at 30% 20%, rgba(124,92,255,0.06), transparent 20%), linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005)); border-radius:10px; padding:14px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.02); width:280px; margin-left:auto; margin-right:auto; margin-top:40px; }
+    .robot-face { width:120px; height:120px; border-radius:50%; background:#000; display:flex; align-items:center; justify-content:center; font-size:56px; margin:0 auto; box-shadow:0 0 15px rgba(0,0,0,0.6); overflow:hidden; }
+    .robot-face img { max-height:100%; max-width:100%; border-radius:50%; object-fit:cover; }
+    .robot-title-normal { font-size:18px; text-align:center; margin-top:8px; color:#e6eef6; font-weight:600; }
+
+    .form-label{ font-size:12px; font-weight:500; margin:12px 0 6px; display:block; text-align:left; width:280px; margin-left:auto; margin-right:auto; }
+    .input, select, .btn { width:280px; margin:0 auto; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#071018; color:#7b8a97; font-size:14px; outline:none; display:block; }
+    .btn{ margin-top:18px; padding:12px 14px; background:linear-gradient(90deg,var(--accent),var(--accent2)); border:0; border-radius:10px; color:#000; font-weight:800; cursor:pointer; font-size:15px }
+    .status{ margin-top:12px; font-size:13px; color:var(--muted); min-height:20px; width:280px; margin-left:auto; margin-right:auto; }
+    .small{ font-size:12px; color:var(--muted); margin-top:6px; width:280px; margin-left:auto; margin-right:auto; text-align:center; }
+    .overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:none; z-index:998; }
+    .overlay.active { display:block; }
+
+    /* custom select look */
+    select.input { -webkit-appearance:none; -moz-appearance:none; appearance:none; background: linear-gradient(145deg, #0b1116, #071018); padding-right:36px; }
+    .select-wrapper { position: relative; width:280px; margin:0 auto; }
+    .select-wrapper::after { content: "\25BC"; position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#7b8a97; }
+
+    /* welcome popup - center */
+    #welcomeBox {
+      position: fixed;
+      inset: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.25);
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s ease;
+    }
+    #welcomeBox.active { opacity:1; pointer-events:auto; }
+    #welcomeContent {
+      background: rgba(0,0,0,0.6);
+      padding:20px 26px;
+      border-radius:10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      text-align:center;
+    }
+    .gradientText{
+      font-family: 'Orbitron', sans-serif;
+      font-weight:900;
+      font-size:22px;
+      background: linear-gradient(90deg,#00D632,#00A3FF);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      letter-spacing:1px;
+    }
+
+    @media (max-width:420px){
+      .input, select, .btn, .form-label { width:220px; margin-left:auto; margin-right:auto; }
+      .robot-box{ width:220px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================= INTRO OVERLAY ================= -->
+<div id="introOverlay" aria-hidden="false">
+  <div class="video-container">
+    <div class="video-wrap">
+      <video id="player" playsinline preload="metadata">
+        <source src="https://files.catbox.moe/mm85lg.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="loading-area" id="loading">
+      <div class="loading-text">Loading</div>
+      <div class="loading-bar"><i id="bar"></i></div>
+      <div class="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <div class="brand-text">DANA RECOVERY V3</div>
+  </div>
+</div>
+
+<!-- ================= WELCOME POPUP ================= -->
+<div id="welcomeBox" aria-hidden="true">
+  <div id="welcomeContent">
+    <div class="gradientText">SELAMAT DATANG</div>
+  </div>
+</div>
+
+<!-- ================= APP (DANA RECOVERY) ================= -->
+<div id="app" role="main" aria-hidden="true">
+  <header class="topbar">
+    <div class="title-top">DANA RECOVERY V3</div>
+  </header>
+
+  <div class="overlay" id="overlay" aria-hidden="true"></div>
+
+  <div class="robot-box" aria-hidden="false">
+    <div class="robot-face">
+      <img src="https://raw.githubusercontent.com/mexazohozoo/KALILINUX_VPS/main/New%20Project%20222%20%5B9EAE6EC%5D.png" alt="Logo DANA Recovery">
+    </div>
+    <div class="robot-title-normal">Dana Recovery Tools</div>
+  </div>
+
+  <label class="form-label" for="nomor">Nomor DANA :</label>
+  <input type="tel" id="nomor" class="input" placeholder="0812xxxxxx" inputmode="tel" aria-required="true" />
+
+  <label class="form-label" for="alasan">Pilih Opsi Masalah :</label>
+  <div class="select-wrapper">
+    <select id="alasan" class="input" aria-required="true">
+      <option value="">PILIH MASALAH</option>
+      <option value="akun_terblokir">Akun Terblokir</option>
+      <option value="saldo_hilang">Saldo Hilang/Transaksi Gagal</option>
+      <option value="lupa_pin">Lupa PIN/Reset Akun</option>
+      <option value="akun_dibajak">Akun Dibajak</option>
+      <option value="limit_terkena">Limit Bermasalah</option>
+    </select>
+  </div>
+
+  <button class="btn" id="sendBtn" aria-label="Kirim Pengaduan">KIRIM PENGADUAN</button>
+  <div class="status" id="statusArea" aria-live="polite"></div>
+  <div class="small">DANA OFFICIAL RECOVERY CHANNEL</div>
+  <main class="empty" aria-hidden="true"></main>
+</div>
+
+<script>
+  (function() {
+    /* ------------------ Intro controls ------------------ */
+    const video = document.getElementById("player");
+    const bar = document.getElementById("bar");
+    const loading = document.getElementById("loading");
+    const introOverlay = document.getElementById("introOverlay");
+    const app = document.getElementById("app");
+    const welcomeBox = document.getElementById("welcomeBox");
+
+    video.addEventListener("loadedmetadata", () => {
+      const dur = video.duration || 5;
+      document.documentElement.style.setProperty("--duration", dur + "s");
+      if (bar) bar.style.animationDuration = dur + "s";
+    });
+
+    function tryPlay() {
+      video.muted = false;
+      video.volume = 1.0;
+      video.play().catch(() => {
+        video.muted = true;
+        video.play().catch(()=>{});
+      });
+    }
+
+    window.addEventListener("load", tryPlay);
+
+    function showAppAfterIntro() {
+      introOverlay.classList.add("hidden");
+      setTimeout(() => {
+        introOverlay.style.display = "none";
+        app.classList.add("visible");
+        app.setAttribute("aria-hidden","false");
+        if (!localStorage.getItem("welcomeShown")) {
+          setTimeout(()=> {
+            welcomeBox.classList.add("active");
+            welcomeBox.setAttribute("aria-hidden","false");
+            localStorage.setItem("welcomeShown","yes");
+            setTimeout(()=> {
+              welcomeBox.classList.remove("active");
+              welcomeBox.setAttribute("aria-hidden","true");
+            }, 3000);
+          }, 200);
+        }
+      }, 620);
+    }
+
+    video.addEventListener("ended", () => {
+      if (loading) loading.style.display = "none";
+      setTimeout(showAppAfterIntro, 300);
+    });
+
+    setTimeout(()=> {
+      if (!video.ended && introOverlay && introOverlay.style.display !== "none") {
+        try { showAppAfterIntro(); } catch(e){}
+      }
+    }, 9000);
+
+    /* ------------------ App / Mail logic (DANA) ------------------ */
+    const sendBtn = document.getElementById('sendBtn');
+    const statusEl = document.getElementById('statusArea');
+    const nomorInput = document.getElementById('nomor');
+    const alasanSelect = document.getElementById('alasan');
+
+    function enc(v){ return encodeURIComponent(v || ''); }
+    function isAndroid(){ return /Android/i.test(navigator.userAgent); }
+    function setStatus(t){ statusEl.textContent = t; }
+    function normalizeNumber(n){
+      if(!n) return n;
+      const s = n.trim().replace(/\s+/g,'');
+      if(/^0[0-9]+$/.test(s)) return '62' + s.slice(1);
+      return s;
+    }
+
+    function buildTemplate(nomor, alasan) {
+      const tampilNomor = nomor.startsWith('62') ? nomor : ('0' + nomor);
+      
+      // Email DANA (dari playstore & web)
+      const danaEmails = ['cs@dana.id', 'support@dana.id', 'privacy@dana.id'];
+      const to = danaEmails.join(',');
+
+      switch(alasan) {
+        case "akun_terblokir":
+          return {
+            to: to,
+            subject: '[URGENT] Bantuan Pemulihan Akun DANA Terblokir - ' + tampilNomor,
+            body: `Kepada Tim DANA Customer Support,
+
+Saya pengguna DANA dengan nomor terdaftar: ${tampilNomor}.
+
+Akun DANA saya terblokir tanpa pemberitahuan jelas. Saya sudah menggunakan DANA selama lebih dari 2 tahun dan selalu mematuhi ketentuan layanan. Saya tidak pernah melakukan pelanggaran atau aktivitas mencurigakan.
+
+Saya sangat membutuhkan akun ini untuk transaksi sehari-hari dan kebutuhan mendesak lainnya. Mohon bantuan untuk membuka blokir akun saya secepatnya.
+
+Data pendukung:
+- Nama lengkap: (isi sesuai KTP)
+- Email terdaftar: (isi email)
+- Tanggal lahir: (DD/MM/YYYY)
+
+Mohon konfirmasi lebih lanjut jika diperlukan dokumen tambahan. Terima kasih atas perhatian dan bantuannya.
+
+Hormat saya,
+Pengguna DANA`
+          };
+        case "saldo_hilang":
+          return {
+            to: to,
+            subject: '[LAPORAN] Saldo DANA Hilang/Transaksi Gagal - ' + tampilNomor,
+            body: `Kepada Tim DANA Customer Support,
+
+Saya melaporkan adanya masalah saldo pada akun DANA saya (nomor: ${tampilNomor}).
+
+Pada tanggal (isi tanggal kejadian), saya melakukan transaksi (isi jenis transaksi) sebesar Rp (isi nominal). Namun hingga saat ini saldo saya berkurang tetapi transaksi tidak berhasil/penerima tidak menerima dana.
+
+Saya telah mencoba menghubungi pihak terkait namun belum ada solusi. Saya lampirkan bukti transaksi (screenshot) jika diperlukan.
+
+Mohon bantuan untuk melakukan investigasi dan mengembalikan saldo saya. Saya sangat membutuhkan dana tersebut untuk kebutuhan mendesak.
+
+Terima kasih atas perhatiannya.
+
+Hormat saya,
+Pengguna DANA`
+          };
+        case "lupa_pin":
+          return {
+            to: to,
+            subject: '[BANTUAN] Reset PIN Akun DANA - ' + tampilNomor,
+            body: `Kepada Tim DANA Customer Support,
+
+Saya pengguna DANA dengan nomor terdaftar: ${tampilNomor}.
+
+Saya mengalami kendala untuk login karena lupa PIN akun. Saya sudah mencoba fitur lupa PIN namun tidak berhasil karena (sebutkan kendala).
+
+Mohon bantuan tim DANA untuk membantu proses reset PIN akun saya. Saya lampirkan data diri untuk verifikasi:
+- Nama lengkap: (sesuai KTP)
+- Email terdaftar: (email)
+- Tanggal lahir: (DD/MM/YYYY)
+- Foto KTP: (bisa dilampirkan jika diminta)
+
+Saya berharap dapat segera menggunakan akun DANA saya kembali. Terima kasih atas bantuannya.
+
+Hormat saya,
+Pengguna DANA`
+          };
+        case "akun_dibajak":
+          return {
+            to: to,
+            subject: '[DARURAT] Akun DANA Dibajak/Diakses Tanpa Izin - ' + tampilNomor,
+            body: `Kepada Tim DANA Customer Support,
+
+Saya melaporkan bahwa akun DANA saya dengan nomor ${tampilNomor} telah diakses oleh pihak tidak bertanggung jawab tanpa izin saya.
+
+Kejadian ini baru saya sadari pada (tanggal). Saya khawatir dana di dalam akun saya disalahgunakan. Mohon segera lakukan tindakan pengamanan akun seperti:
+- Memblokir sementara akses ke akun saya
+- Membekukan semua transaksi yang mencurigakan
+- Membantu proses pemulihan akun ke pemilik sah
+
+Data diri untuk verifikasi:
+- Nama lengkap: (sesuai KTP)
+- Email: (email terdaftar)
+- Tanggal lahir: (DD/MM/YYYY)
+- Nomor yang terdaftar: ${tampilNomor}
+
+Saya bersedia melengkapi dokumen pendukung jika diperlukan. Mohon tindakan cepat karena ini menyangkut dana pribadi saya.
+
+Terima kasih atas perhatiannya.
+
+Hormat saya,
+Korban pembajakan akun`
+          };
+        case "limit_terkena":
+          return {
+            to: to,
+            subject: '[INFORMASI] Limit Akun DANA Bermasalah - ' + tampilNomor,
+            body: `Kepada Tim DANA Customer Support,
+
+Saya pengguna DANA dengan nomor ${tampilNomor}.
+
+Akun DANA saya mengalami masalah terkait limit transaksi. Saat ingin melakukan transaksi, muncul notifikasi bahwa akun saya terkena limit/pembatasan padahal saya yakin belum melampaui batas yang ditentukan.
+
+Saya sudah mengecek riwayat transaksi dan tidak menemukan kejanggalan. Mohon bantuan untuk memeriksa dan mereset limit akun saya agar dapat melakukan transaksi kembali.
+
+Jika diperlukan verifikasi lebih lanjut, saya siap memberikan data yang diminta.
+
+Terima kasih atas bantuan tim DANA.
+
+Hormat saya,
+Pengguna DANA`
+          };
+        default:
+          return {
+            to: to,
+            subject: 'Bantuan Akun DANA - ' + tampilNomor,
+            body: `Kepada Tim DANA Customer Support,
+
+Saya membutuhkan bantuan terkait akun DANA saya dengan nomor: ${tampilNomor}.
+
+Mohon informasi lebih lanjut mengenai prosedur penyelesaian masalah yang saya alami. Saya lampirkan nomor yang dapat dihubungi untuk koordinasi lebih lanjut.
+
+Terima kasih.
+
+Hormat saya,
+Pengguna DANA`
+          };
+      }
+    }
+
+    function buildIntentUrl(t) {
+      return `intent://compose?to=${enc(t.to)}&subject=${enc(t.subject)}&body=${enc(t.body)}#Intent;scheme=mailto;package=com.google.android.gm;end;`;
+    }
+    function buildMailtoUrl(t) {
+      return `mailto:${enc(t.to)}?subject=${enc(t.subject)}&body=${enc(t.body)}`;
+    }
+    function buildGmailWebUrl(t) {
+      return `https://mail.google.com/mail/?view=cm&fs=1&to=${enc(t.to)}&su=${enc(t.subject)}&body=${enc(t.body)}`;
+    }
+
+    sendBtn.addEventListener('click', () => {
+      let nomor = (nomorInput.value || '').trim();
+      let alasan = (alasanSelect.value || '');
+
+      if (!nomor || !alasan) { setStatus("Isi nomor & pilih masalah dulu, cuk."); return; }
+
+      nomor = normalizeNumber(nomor);
+      const tpl = buildTemplate(nomor, alasan);
+
+      const intentUrl = buildIntentUrl(tpl);
+      const mailtoUrl = buildMailtoUrl(tpl);
+      const gmailWebUrl = buildGmailWebUrl(tpl);
+
+      sendBtn.disabled = true;
+      sendBtn.setAttribute('aria-busy', 'true');
+
+      if (isAndroid()) {
+        setStatus("Mencoba buka Gmail app...");
+        try { window.location.href = intentUrl; } catch(e) {}
+
+        let handled = false;
+        const fallback = () => {
+          if (handled) return;
+          handled = true;
+          setStatus("Gagal buka app, alihkan ke web...");
+          try { window.location.href = mailtoUrl; } catch(e) {
+            try { window.open(gmailWebUrl, '_blank'); } catch(err) { setStatus("Gagal total, buka email manual."); }
+          }
+          sendBtn.disabled = false;
+          sendBtn.removeAttribute('aria-busy');
+        };
+
+        const onVisChange = () => {
+          if (document.hidden) {
+            handled = true;
+            setStatus("Compose terbuka di Gmail.");
+            sendBtn.disabled = false;
+            sendBtn.removeAttribute('aria-busy');
+          }
+        };
+        document.addEventListener('visibilitychange', onVisChange, { once: true });
+        setTimeout(() => { if (!handled) fallback(); }, 1200);
+
+      } else {
+        setStatus("Membuka aplikasi email...");
+        try {
+          window.location.href = mailtoUrl;
+          setTimeout(() => {
+            if (!document.hidden) {
+              try { window.open(gmailWebUrl, "_blank"); } catch(e) {}
+            }
+            sendBtn.disabled = false;
+            sendBtn.removeAttribute('aria-busy');
+          }, 900);
+        } catch(err) {
+          try { window.open(gmailWebUrl, "_blank"); } catch(e) {}
+          sendBtn.disabled = false;
+          sendBtn.removeAttribute('aria-busy');
+        }
+      }
+    });
+  })();
+</script>
+</body>
+</html>
